@@ -172,9 +172,11 @@ def main():
     config = app_config()
     app = QApplication(sys.argv)
     widget = FloatingDock(config)
+    # Ensure the widget calculates its layout immediately
     widget.show()
     widget.raise_()
     widget.activateWindow()
+    # Now that the widget has calculated its size, position it correctly so we can hide it
     desktop_geometry = app.primaryScreen().availableGeometry()
     widget.move(widget.hidden_pos)
     widget.hide()
