@@ -1,0 +1,72 @@
+{
+    "App": {
+		"icon": "./icons/svg/apps.svg",
+		"type": "open_app",
+		"exec": "C:\\Users\\xxx\\WinLaunch.0.7.3.0\\WinLaunch.exe"
+	},
+	"Arc Browser": {
+		"icon": "./icons/svg/arc.svg",
+		"type": "open_app",
+		"exec": "Arc.exe"
+	},
+    "Firefox": {
+		"icon": "./icons/svg/firefox.svg",
+		"type": "open_app",
+		"exec": "C:\\Program Files\\Mozilla Firefox\\firefox.exe"
+	},
+	"Termianal": {
+		"icon": "./icons/svg/terminal.svg",
+		"type": "open_app",
+		"exec": "wt"
+	},
+	"File Explorer": {
+		"icon": "./icons/svg/file-manager.svg",
+		"type": "open_app",
+		"exec": "explorer"
+	},
+	"Weather": {
+		"icon": "./icons/svg/weather.svg",
+		"type": "open_app",
+		"exec": "C:\\Program Files\\WindowsApps\\Microsoft.BingWeather_4.53.61401.0_x64__8wekyb3d8bbwe\\Microsoft.Msn.Weather.exe"
+	},
+	"Calculator": {
+		"icon": "./icons/svg/calc.svg",
+		"type": "open_app",
+		"exec": "C:\\Windows\\System32\\calc.exe"
+	},
+	"Adobe Photoshop": {
+		"icon": "./icons/svg/Photoshop.svg",
+		"type": "open_app",
+		"exec": "Photoshop.exe"
+	},
+	"Visual Studio Code": {
+		"icon": "./icons/svg/visual-studio-code.svg",
+		"type": "open_app",
+		"exec": "C:\\Users\\xxx\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd"
+	},
+	"Telegram": {
+		"icon": "./icons/svg/telegram.svg",
+		"type": "open_app",
+		"exec": "telegram"
+	},
+	"Skype": {
+		"icon": "./icons/svg/skype.svg",
+		"type": "open_app",
+		"exec": "skype"
+	},
+	"Viber": {
+		"icon": "./icons/svg/viber.svg",
+		"type": "open_app",
+		"exec": "viber"
+	},
+    "Discord": {
+		"icon": "./icons/svg/discord.svg",
+		"type": "open_app",
+		"exec": "discord"
+	},
+	"YouTube": {
+		"icon": "./icons/svg/youtube.svg",
+		"type": "open_url",
+		"url": "https://www.youtube.com"
+	}
+}
