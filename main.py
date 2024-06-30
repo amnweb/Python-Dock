@@ -2,7 +2,7 @@ import sys
 import json
 import logging
 import ctypes
-from PyQt6.QtWidgets import QApplication, QFrame, QStyleOption, QStyle,QHBoxLayout, QLabel, QToolTip, QGraphicsOpacityEffect
+from PyQt6.QtWidgets import QApplication, QFrame, QStyleOption, QStyle, QHBoxLayout, QLabel, QToolTip, QGraphicsOpacityEffect
 from PyQt6.QtGui import QDesktopServices, QIcon, QPixmap, QPainter, QCursor, QFontMetrics
 from PyQt6.QtCore import Qt, QTimer, QRect, QPropertyAnimation, QUrl, QObject, QEvent, QPoint
 from ctypes import windll
@@ -88,21 +88,6 @@ class FloatingDock(QFrame):
         self.timer.timeout.connect(self.toggle_visibility)
         self.timer.start(400)
         self.is_visible = False
-        # TOTAL_HEIGHT  =QFrame(padding top+bottom) + QLabel(padding top+bottom) + QFrame (border top+bottom) 6+6+6+6+1+1
-        TOTAL_HEIGHT = DOCK_ICON_SIZE + 26 
-        desktop_geometry = QApplication.primaryScreen().availableGeometry()
-        self.hidden_pos = QPoint((desktop_geometry.width() - self.width()) // 2, desktop_geometry.height() - 1)
-        self.visible_pos = QPoint((desktop_geometry.width() - self.width()) // 2, desktop_geometry.height() - TOTAL_HEIGHT)
-
-        self.slide_up_animation = QPropertyAnimation(self, b"pos")
-        self.slide_up_animation.setDuration(ANIMATION_SPEED)
-        self.slide_up_animation.setStartValue(self.hidden_pos)
-        self.slide_up_animation.setEndValue(self.visible_pos)
-
-        self.slide_down_animation = QPropertyAnimation(self, b"pos")
-        self.slide_down_animation.setDuration(ANIMATION_SPEED)
-        self.slide_down_animation.setStartValue(self.visible_pos)
-        self.slide_down_animation.setEndValue(self.hidden_pos)
 
         self.opacity_effect = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self.opacity_effect)
@@ -178,8 +163,24 @@ def main():
     widget.activateWindow()
     # Now that the widget has calculated its size, position it correctly so we can hide it
     desktop_geometry = app.primaryScreen().availableGeometry()
-    widget.move(widget.hidden_pos)
+    widget.move((desktop_geometry.width() - widget.width()) // 2, desktop_geometry.height() - 1)
     widget.hide()
+    
+    # TOTAL_HEIGHT  =QFrame(padding top+bottom) + QLabel(padding top+bottom) + QFrame (border top+bottom) 6+6+6+6+1+1
+    TOTAL_HEIGHT = DOCK_ICON_SIZE + 26 
+    widget.hidden_pos = QPoint((desktop_geometry.width() - widget.width()) // 2, desktop_geometry.height() - 1)
+    widget.visible_pos = QPoint((desktop_geometry.width() - widget.width()) // 2, desktop_geometry.height() - TOTAL_HEIGHT)
+
+    widget.slide_up_animation = QPropertyAnimation(widget, b"pos")
+    widget.slide_up_animation.setDuration(ANIMATION_SPEED)
+    widget.slide_up_animation.setStartValue(widget.hidden_pos)
+    widget.slide_up_animation.setEndValue(widget.visible_pos)
+
+    widget.slide_down_animation = QPropertyAnimation(widget, b"pos")
+    widget.slide_down_animation.setDuration(ANIMATION_SPEED)
+    widget.slide_down_animation.setStartValue(widget.visible_pos)
+    widget.slide_down_animation.setEndValue(widget.hidden_pos)
+
     sys.exit(app.exec())
 
 if __name__ == "__main__":
