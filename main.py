@@ -89,7 +89,7 @@ class FloatingDock(QFrame):
         self.timer.start(400)
         self.is_visible = False
         # TOTAL_HEIGHT  =QFrame(padding top+bottom) + QLabel(padding top+bottom) + QFrame (border top+bottom) 6+6+6+6+1+1
-        TOTAL_HEIGHT = DOCK_ICON_SIZE + 46 
+        TOTAL_HEIGHT = DOCK_ICON_SIZE + 26 
         desktop_geometry = QApplication.primaryScreen().availableGeometry()
         self.hidden_pos = QPoint((desktop_geometry.width() - self.width()) // 2, desktop_geometry.height() - 1)
         self.visible_pos = QPoint((desktop_geometry.width() - self.width()) // 2, desktop_geometry.height() - TOTAL_HEIGHT)
