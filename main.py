@@ -2,32 +2,40 @@ import sys
 import json
 import logging
 import ctypes
+import time
 from PyQt6.QtWidgets import QApplication, QFrame, QStyleOption, QStyle, QHBoxLayout, QLabel, QToolTip, QGraphicsOpacityEffect
 from PyQt6.QtGui import QDesktopServices, QIcon, QPixmap, QPainter, QCursor, QFontMetrics
 from PyQt6.QtCore import Qt, QTimer, QRect, QPropertyAnimation, QUrl, QObject, QEvent, QPoint
 from ctypes import windll
+from win32api import GetSystemMetrics
 
 ############### SETTINGS ####################
 DOCK_ICON_SIZE = 48
 ANIMATION_SPEED = 200
-HIDE_TASKBAR = False  # Hide Windows taskbar when Dock is running. Taskbar must have enabled Auto Hide option. Only primary taskbar will be hidden.
+PADDING = 6
+BORDER_RADIUS = 16
+HIDE_TASKBAR = True  # Hide Windows taskbar when Dock is running. Taskbar must have enabled Auto Hide option. Only primary taskbar will be hidden.
 logging.basicConfig(filename='log.txt', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 #############################################
 
 class TooltipEventFilter(QObject):
-    def __init__(self, parent, tooltip_text):
+    def __init__(self, parent, tooltip_text, dock_widget):
         super().__init__(parent)
         self.tooltip_text = tooltip_text
+        self.dock_widget = dock_widget
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.Type.Enter:
-            global_pos = obj.mapToGlobal(QPoint(0, 0))
-            font_metrics = QFontMetrics(obj.font())
-            tooltip_width = font_metrics.horizontalAdvance(self.tooltip_text)
-            icon_height = obj.height()
-            x = global_pos.x() + (DOCK_ICON_SIZE - tooltip_width - 20) // 2
-            y = global_pos.y() - 8 - icon_height
-            QToolTip.showText(QPoint(x, y), self.tooltip_text, obj)
+            if not self.dock_widget.opacity_animation.state() == QPropertyAnimation.State.Running and \
+               not self.dock_widget.slide_up_animation.state() == QPropertyAnimation.State.Running and \
+               not self.dock_widget.slide_down_animation.state() == QPropertyAnimation.State.Running:
+                global_pos = obj.mapToGlobal(QPoint(0, 0))
+                font_metrics = QFontMetrics(obj.font())
+                tooltip_width = font_metrics.horizontalAdvance(self.tooltip_text)
+                icon_height = obj.height()
+                x = global_pos.x() + ((DOCK_ICON_SIZE - PADDING) - tooltip_width) // 2
+                y = global_pos.y() - DOCK_ICON_SIZE - PADDING
+                QToolTip.showText(QPoint(x, y), self.tooltip_text, obj)
         elif event.type() == QEvent.Type.Leave:
             QToolTip.hideText()
         return False
@@ -37,34 +45,28 @@ class FloatingDock(QFrame):
         super().__init__()
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setStyleSheet("""
-            QFrame {
+        self.setStyleSheet(f"""
+            QFrame {{
                background-color: rgba(30, 33, 49, 0.85);
                border: 1px solid #41434c;
-               border-radius: 16px;
-               padding: 6px;
-            }
-            QLabel {
+               border-radius: {BORDER_RADIUS}px;
+               padding: {PADDING}px;
+            }}
+            QLabel {{
                 background-color: transparent;
                 border: none;
-                padding: 6px;
-                border-radius: 8px;
-            }
-            QLabel:hover {
+                margin:0 4px;
+                padding: {PADDING}px;
+                border-radius: {BORDER_RADIUS / 1.4}px;
+            }}
+            QLabel:hover {{
                 background-color: rgba(255, 255, 255, 0.2);
-            }
-            QToolTip {
-                font-size: 13px;
-                border-radius: 3px;
-                border: 1px solid #41434c;
-                background-color: rgb(30, 33, 49);
-                color: white;
-            }
+            }}
         """)
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-
+        layout.setSpacing(0)
         for label_name, label_info in config.items():
             icon_label = QLabel(self)
             icon_path = label_info["icon"]
@@ -79,7 +81,7 @@ class FloatingDock(QFrame):
             else:
                 action = lambda: None
             icon_label.mousePressEvent = lambda event, action=action: self.on_icon_click(event, action)
-            tooltip_filter = TooltipEventFilter(icon_label, label_name)
+            tooltip_filter = TooltipEventFilter(icon_label, label_name, self)
             icon_label.installEventFilter(tooltip_filter)
             layout.addWidget(icon_label)
 
@@ -156,21 +158,33 @@ def main():
 
     config = app_config()
     app = QApplication(sys.argv)
+    # Set the global stylesheet for QToolTip
+    app.setStyleSheet("""
+        QToolTip {
+            font-size: 13px;
+            padding:1px 2px;
+            border-radius: 2px;
+            border: 1px solid #41434c;
+            background-color: rgb(30, 33, 49);
+            color: white;
+        }
+    """)
     widget = FloatingDock(config)
     # Ensure the widget calculates its layout immediately
     widget.show()
     widget.raise_()
     widget.activateWindow()
-    # Now that the widget has calculated its size, position it correctly so we can hide it
-    desktop_geometry = app.primaryScreen().availableGeometry()
-    widget.move((desktop_geometry.width() - widget.width()) // 2, desktop_geometry.height() - 1)
-    widget.hide()
     
-    # TOTAL_HEIGHT  =QFrame(padding top+bottom) + QLabel(padding top+bottom) + QFrame (border top+bottom) 6+6+6+6+1+1
-    TOTAL_HEIGHT = DOCK_ICON_SIZE + 26 
-    widget.hidden_pos = QPoint((desktop_geometry.width() - widget.width()) // 2, desktop_geometry.height() - 1)
-    widget.visible_pos = QPoint((desktop_geometry.width() - widget.width()) // 2, desktop_geometry.height() - TOTAL_HEIGHT)
-
+    screen = ctypes.windll.user32
+    dpi = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+    SCREEN_HEIGHT = int (screen.GetSystemMetrics(1) // dpi)
+    SCREEN_WIDTH  = int (screen.GetSystemMetrics(0) // dpi)
+    widget.move((SCREEN_WIDTH - widget.width()) // 2, SCREEN_HEIGHT - 1)
+    
+    TOTAL_HEIGHT = DOCK_ICON_SIZE + (PADDING * 4) + 2 # Padding bottom + border
+    widget.hidden_pos = QPoint((SCREEN_WIDTH - widget.width()) // 2, SCREEN_HEIGHT - 1)
+    widget.visible_pos = QPoint((SCREEN_WIDTH - widget.width()) // 2, SCREEN_HEIGHT - TOTAL_HEIGHT)
+    widget.hide()
     widget.slide_up_animation = QPropertyAnimation(widget, b"pos")
     widget.slide_up_animation.setDuration(ANIMATION_SPEED)
     widget.slide_up_animation.setStartValue(widget.hidden_pos)
